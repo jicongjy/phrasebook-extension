@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>내 문장 모음 · 흐름 시험</title>
+<style>
+  :root {
+    --frame: #E2E2E2; --surface: #FFFFFF; --text: #161616; --sub: #595959;
+    --line: #E6E6E6; --soft: #F2F2F2; --ink: #161616; --on-ink: #FFFFFF; --shadow: rgba(0,0,0,.14);
+  }
+  :root[data-theme="dark"] {
+    --frame: #0F0F0F; --surface: #1A1A1A; --text: #F2F2F2; --sub: #9A9A9A;
+    --line: #2C2C2C; --soft: #262626; --ink: #F2F2F2; --on-ink: #161616; --shadow: rgba(0,0,0,.5);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--frame); color: var(--text);
+    font-family: Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+    font-size: 14px; line-height: 1.6; word-break: keep-all;
+  }
+  button, input, textarea { font: inherit; color: inherit; }
+  svg { flex: none; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px 0; max-width: 1320px; margin: 0 auto; }
+  .top h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+  .top p { margin: 2px 0 0; color: var(--sub); font-size: 13px; }
+  .pill { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 14px; cursor: pointer; font-size: 13px; }
+  .pill:hover, .pill:focus-visible { background: var(--soft); outline: none; }
+  .pill.ink { background: var(--ink); color: var(--on-ink); border-color: var(--ink); font-weight: 700; }
+  .pill.ink:hover { opacity: .88; background: var(--ink); }
+  .pill.sm { padding: 3px 11px; font-size: 12px; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 460px; gap: 16px; padding: 16px 20px 24px; max-width: 1320px; margin: 0 auto; align-items: start; }
+  @media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } }
+
+  /* 브라우저 */
+  .browser { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; position: relative; }
+  .bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .ico-btn { width: 32px; height: 32px; border-radius: 999px; border: 0; background: transparent; color: var(--sub); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+  .ico-btn:hover, .ico-btn:focus-visible { background: var(--soft); color: var(--text); outline: none; }
+  .addr { flex: 1; min-width: 0; background: var(--soft); border-radius: 999px; padding: 5px 14px; color: var(--sub); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ext { position: relative; }
+  .ext-btn { width: 32px; height: 32px; border-radius: 999px; border: 0; background: var(--ink); color: var(--on-ink); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+  .ext-btn[aria-expanded="true"] { outline: 2px solid var(--text); outline-offset: 2px; }
+  .badge-top {
+    position: absolute; top: -9px; right: -14px; display: none; font-size: 11px; font-weight: 700; line-height: 18px;
+    padding: 0 8px; border-radius: 999px; background: var(--ink); color: var(--on-ink); border: 2px solid var(--surface);
+    box-shadow: 0 2px 8px var(--shadow); white-space: nowrap; pointer-events: none;
+  }
+  .badge-top.on { display: block; animation: pop .25s ease-out; }
+  .badge-top.alert { background: var(--surface); color: var(--text); border-color: var(--ink); }
+  @keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .page { padding: 28px 32px 32px; min-height: 600px; transition: opacity .15s; }
+  .crumb { font-size: 12px; color: var(--sub); margin-bottom: 8px; }
+  .page h2 { margin: 0 0 18px; font-size: 22px; letter-spacing: -0.02em; }
+  .page h3 { margin: 22px 0 6px; font-size: 15px; }
+  .page p { margin: 0 0 8px; font-size: 15px; }
+  .page ::selection { background: var(--ink); color: var(--on-ink); }
+  .reply { margin-top: 28px; border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: var(--soft); }
+  .reply label { display: block; font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+  .reply textarea { width: 100%; min-height: 84px; resize: vertical; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--surface); color: var(--text); line-height: 1.55; }
+  .reply .row { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+  .reply .hint { color: var(--sub); font-size: 12px; }
+
+  /* 우클릭 메뉴 */
+  .ctx { position: fixed; z-index: 60; width: 232px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 6px; box-shadow: 0 8px 24px var(--shadow); display: none; }
+  .ctx.on { display: block; }
+  .ctx button { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; border: 0; background: transparent; border-radius: 8px; padding: 7px 10px; font-size: 13px; color: var(--sub); cursor: pointer; }
+  .ctx button:hover, .ctx button:focus-visible { background: var(--soft); color: var(--text); outline: none; }
+  .ctx button.save { color: var(--text); font-weight: 700; }
+  .ctx hr { border: 0; height: 1px; background: var(--line); margin: 4px 6px; }
+
+  /* 팝업 */
+  .popup { position: absolute; z-index: 40; top: 52px; right: 12px; width: 360px; background: var(--frame); border: 1px solid var(--line); border-radius: 20px; padding: 12px; box-shadow: 0 12px 32px var(--shadow); display: none; }
+  .popup.on { display: block; }
+  .ph { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 10px; gap: 8px; }
+  .ph .l { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .ph h2 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; }
+  .mark { width: 28px; height: 28px; border-radius: 999px; background: var(--ink); color: var(--on-ink); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .ph .r { display: flex; align-items: center; gap: 8px; }
+  .cnt { font-size: 12px; color: var(--sub); }
+  .cnt.hot { color: var(--text); font-weight: 700; }
+  .add-btn { display: inline-flex; align-items: center; gap: 4px; border: 0; background: var(--ink); color: var(--on-ink); border-radius: 999px; padding: 4px 11px 4px 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .add-btn:hover, .add-btn:focus-visible { opacity: .88; outline: none; }
+  .banner { display: flex; gap: 8px; align-items: flex-start; background: var(--surface); border: 1px solid var(--ink); border-radius: 14px; padding: 9px 12px; margin-bottom: 8px; font-size: 12.5px; line-height: 1.5; }
+  .banner svg { margin-top: 2px; }
+  .search { position: relative; margin-bottom: 8px; }
+  .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--sub); }
+  .search input { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 14px 7px 34px; font-size: 13px; }
+  .search input:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+  .plist { display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto; }
+  .prow { position: relative; }
+  .card { display: block; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 70px 12px 14px; cursor: pointer; line-height: 1.55; overflow-wrap: anywhere; }
+  .card .t { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .card:hover, .card:focus-visible { background: var(--soft); outline: none; }
+  .card.hl { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+  ::highlight(keep-sel) { background-color: #161616; color: #FFFFFF; }
+  :root[data-theme="dark"] ::highlight(keep-sel) { background-color: #F2F2F2; color: #161616; }
+  .tag { display: inline-block; margin-top: 6px; padding: 1px 8px; border-radius: 999px; background: var(--ink); color: var(--on-ink); font-size: 11px; font-weight: 700; }
+  .acts { position: absolute; top: 8px; right: 8px; display: flex; gap: 2px; }
+  .act { width: 28px; height: 28px; border: 0; border-radius: 999px; background: transparent; color: var(--sub); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .act:hover, .act:focus-visible { background: var(--line); color: var(--text); outline: none; }
+  .empty, .errbox { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 26px 20px; text-align: center; color: var(--sub); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .empty strong, .errbox strong { color: var(--text); margin-top: 8px; display: block; }
+  .empty .sub { font-size: 12.5px; }
+  .empty .pill, .errbox .pill { margin-top: 8px; }
+  .pfoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 6px 0; font-size: 12px; color: var(--sub); }
+  .pfoot .lk { display: flex; align-items: center; gap: 6px; }
+  .link { border: 0; background: none; color: var(--sub); text-decoration: underline; cursor: pointer; font-size: 12px; padding: 0; white-space: nowrap; }
+  .link:hover, .link:focus-visible { color: var(--text); outline: none; }
+
+  .editor { background: var(--surface); border: 2px solid var(--ink); border-radius: 16px; padding: 10px; margin-bottom: 0; }
+  .editor textarea { width: 100%; min-height: 74px; resize: none; border: 0; background: transparent; color: var(--text); line-height: 1.55; padding: 4px; }
+  .editor textarea:focus-visible { outline: none; }
+  .editor .meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 4px; }
+  .editor .count { font-size: 12px; color: var(--sub); font-variant-numeric: tabular-nums; }
+  .editor .count.over { color: var(--text); font-weight: 700; }
+  .editor .err { display: none; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; margin-top: 6px; }
+  .editor .err.on { display: flex; }
+  .editor .btns { display: flex; gap: 6px; }
+
+  .confirm { position: absolute; inset: 0; z-index: 3; background: rgba(0,0,0,.45); border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .dialog { background: var(--surface); border-radius: 16px; padding: 18px; width: 100%; }
+  .dialog strong { display: block; margin-bottom: 4px; }
+  .dialog p { margin: 0 0 14px; color: var(--sub); font-size: 13px; }
+  .dialog .btns { display: flex; gap: 8px; justify-content: flex-end; }
+
+  .toast { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 4; display: none; align-items: center; gap: 10px; border-radius: 14px; padding: 10px 14px; font-size: 13px; line-height: 1.45; box-shadow: 0 6px 20px var(--shadow); }
+  .toast.on { display: flex; animation: up .18s ease-out; }
+  .toast.settled { animation: none; }
+  .ver { display: block; font-size: 11px; color: var(--sub); line-height: 1.2; margin-top: 1px; }
+  .brand { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding: 9px 6px 0; border-top: 1px solid var(--line); font-size: 12px; color: var(--sub); }
+  .brand b { color: var(--text); font-weight: 700; }
+  .brand .lks { display: flex; gap: 12px; }
+  .pick h3 { margin: 0 0 2px; font-size: 15px; letter-spacing: -0.02em; }
+  .pick > p { margin: 0 0 10px; color: var(--sub); font-size: 12.5px; }
+  .pick .lab { font-size: 11.5px; color: var(--sub); margin: 8px 2px 4px; }
+  .newcard { background: var(--surface); border: 2px solid var(--ink); border-radius: 14px; padding: 10px 12px; }
+  .newcard .t, .opt .t { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .picklist { display: flex; flex-direction: column; gap: 6px; max-height: 190px; overflow-y: auto; padding: 2px; }
+  .opt { display: flex; gap: 10px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 9px 12px; cursor: pointer; }
+  .opt.sel { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+  .opt input { margin-top: 3px; accent-color: var(--ink); }
+  .opt .tag { margin-top: 4px; }
+  .pick .btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+  .toast.ok { background: var(--ink); color: var(--on-ink); }
+  .toast.warn { background: var(--surface); color: var(--text); border: 2px solid var(--ink); }
+  .toast span { flex: 1; }
+  .toast .tb { border: 0; background: none; color: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; white-space: nowrap; }
+  @keyframes up { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* 시험 패널 */
+  .panel { display: flex; flex-direction: column; gap: 12px; }
+  @media (min-width: 1001px) { .panel { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; } }
+  .box { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 16px; }
+  .box h2 { margin: 0 0 4px; font-size: 15px; font-weight: 700; letter-spacing: -0.02em; display: flex; justify-content: space-between; align-items: baseline; }
+  .box h2 small { font-weight: 400; color: var(--sub); font-size: 12px; }
+  .box > p { margin: 0 0 10px; color: var(--sub); font-size: 12px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .tab { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 4px 14px; font-size: 13px; cursor: pointer; color: var(--sub); }
+  .tab[aria-selected="true"] { background: var(--ink); border-color: var(--ink); color: var(--on-ink); font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--sub); font-weight: 500; font-size: 12px; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+  td { padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  td.no { width: 26px; color: var(--sub); }
+  td.st { width: 56px; text-align: right; }
+  td .exp { display: block; color: var(--sub); font-size: 12px; margin-top: 2px; }
+  tr.grp td { background: var(--soft); font-weight: 700; font-size: 12px; padding: 5px 8px; border-radius: 8px; border-bottom: 0; }
+  .st-chip { display: inline-flex; align-items: center; justify-content: center; min-width: 46px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 11px; color: var(--sub); background: transparent; cursor: pointer; }
+  tr.ok .st-chip { background: var(--ink); border-color: var(--ink); color: var(--on-ink); font-weight: 700; }
+  .spec td:first-child { width: 28%; font-weight: 500; }
+  .spec td .exp { margin-top: 3px; }
+  .note { background: var(--soft); border-radius: 14px; padding: 10px 12px; font-size: 12.5px; margin-bottom: 12px; }
+  .note b { display: block; margin-bottom: 4px; }
+  .note ul { margin: 0; padding-left: 16px; }
+  .note li { margin: 2px 0; }
+  .tools { display: flex; flex-wrap: wrap; gap: 8px; }
+  .switches { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .sw { display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer; }
+  .sw input { width: 16px; height: 16px; accent-color: var(--ink); }
+  .sw small { color: var(--sub); }
+  .log { list-style: none; margin: 0; padding: 0; max-height: 200px; overflow-y: auto; font-size: 12px; }
+  .log li { display: flex; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+  .log li:last-child { border-bottom: 0; }
+  .log time { color: var(--sub); flex: none; font-variant-numeric: tabular-nums; }
+  .log .none { color: var(--sub); }
+  .skel { height: 58px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); position: relative; overflow: hidden; }
+  .skel::before, .skel::after { content: ""; position: absolute; left: 14px; height: 9px; border-radius: 999px; background: var(--line); animation: pulse 1.1s ease-in-out infinite; }
+  .skel::before { top: 16px; width: 70%; }
+  .skel::after { top: 33px; width: 42%; }
+  @keyframes pulse { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+  .help { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  .help h3 { margin: 0 0 12px; font-size: 15px; letter-spacing: -0.02em; }
+  .help ol { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .help li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; }
+  .help li b { display: inline-flex; width: 22px; height: 22px; border-radius: 999px; background: var(--ink); color: var(--on-ink); align-items: center; justify-content: center; font-size: 12px; flex: none; }
+  .help .sec { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; font-size: 12.5px; color: var(--sub); }
+  .help .sec strong { color: var(--text); display: block; margin-bottom: 2px; }
+  .help .sec p { margin: 0 0 6px; }
+  .help .go { margin-top: 12px; display: flex; justify-content: flex-end; }
+  .progress { height: 6px; border-radius: 999px; background: var(--soft); overflow: hidden; margin: 8px 0 4px; }
+  .progress i { display: block; height: 100%; background: var(--ink); width: 0; transition: width .2s; }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div>
+    <h1>내 문장 모음 · 흐름 시험</h1>
+    <p>크롬에 설치하지 않고 저장·복사·수정·삭제와 예외 상황까지 눌러 보며 확인하는 시험용 화면이에요.</p>
+  </div>
+  <button class="pill" id="themeBtn" type="button">어두운 화면으로</button>
+</div>
+
+<div class="layout">
+  <!-- 왼쪽: 가짜 브라우저 -->
+  <div class="browser" id="browser">
+    <div class="bar">
+      <button class="ico-btn" id="reloadBtn" type="button" aria-label="새로고침" title="새로고침">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 11-2.3-5.7"/><path d="M20 4v5h-5"/></svg>
+      </button>
+      <div class="addr">help.example.com/faq/refund</div>
+      <div class="ext">
+        <button class="ext-btn" id="extBtn" type="button" aria-label="내 문장 모음" aria-expanded="false" title="내 문장 모음">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+        </button>
+        <span class="badge-top" id="badge" role="status"></span>
+      </div>
+    </div>
+
+    <div class="popup" id="popup" role="dialog" aria-label="내 문장 모음"></div>
+
+    <div class="page" id="page">
+      <div class="crumb">도움말 센터 · 자주 묻는 질문</div>
+      <h2>환불과 배송 안내</h2>
+
+      <h3>환불</h3>
+      <p>환불은 결제 후 7일 이내, 사용 이력이 없는 경우에 가능합니다.</p>
+      <p>기간이 지났거나 사용한 경우에는 별도 문의가 필요합니다. 접수 순서대로 확인하며, 처리 결과는 문의하신 방법으로 안내드려요.</p>
+
+      <h3>배송</h3>
+      <p>배송은 결제 완료 후 2~3일 걸립니다. 주말과 공휴일은 제외돼요.</p>
+      <p>도서 산간 지역은 하루 이틀 더 걸릴 수 있습니다.</p>
+
+      <h3>문의 접수</h3>
+      <p>문의해 주셔서 감사합니다. 확인 후 영업일 기준 1~2일 안에 답변드리겠습니다.</p>
+      <p>불편을 드려 죄송합니다. 담당자가 확인하고 다시 안내드리겠습니다.</p>
+
+      <div class="reply">
+        <label for="reply">고객 문의 답변 (붙여넣기 시험)</label>
+        <textarea id="reply" placeholder="여기에 복사한 문장을 붙여 넣어 보세요."></textarea>
+        <div class="row">
+          <button class="pill" id="pasteBtn" type="button">복사한 문장 붙여넣기</button>
+          <span class="hint">단축키(붙여넣기)로 붙여 넣어도 돼요.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 오른쪽: 시험 패널 -->
+  <div class="panel">
+    <div class="box">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tabCases" aria-selected="true" type="button">시험 순서</button>
+        <button class="tab" role="tab" id="tabSpec" aria-selected="false" type="button">화면 기획표</button>
+      </div>
+      <div id="viewCases">
+        <h2>시험 순서 <small id="doneCount"></small></h2>
+        <div class="progress"><i id="bar"></i></div>
+        <p>왼쪽 화면에서 해 보면 상태가 자동으로 바뀌어요. 상태를 눌러 직접 바꿀 수도 있어요.</p>
+        <table><tbody id="cases"></tbody></table>
+      </div>
+      <div id="viewSpec" hidden></div>
+    </div>
+
+    <div class="box">
+      <h2>시험 도구</h2>
+      <p>한 번에 만들기 어려운 상황을 흉내 낼 수 있어요.</p>
+      <div class="tools">
+        <button class="pill sm" id="fill28" type="button">문장 28개 채우기</button>
+        <button class="pill sm" id="fill30" type="button">문장 30개 채우기</button>
+        <button class="pill sm" id="fillLong" type="button">너무 긴 문장 저장 시도</button>
+        <button class="pill sm" id="helpBtn" type="button">처음 사용 안내 다시 보기</button>
+        <button class="pill sm" id="clearBtn" type="button">모두 비우기</button>
+        <button class="pill sm" id="resetBtn" type="button">처음부터 다시</button>
+      </div>
+      <div class="switches">
+        <label class="sw"><input type="checkbox" id="swSlow"> <span>처리가 느린 경우 <small>(저장 중·불러오는 중 화면)</small></span></label>
+        <label class="sw"><input type="checkbox" id="swNoPopup"> <span>팝업 자동 열기가 막힌 경우 <small>(아이콘 표시만 보임)</small></span></label>
+        <label class="sw"><input type="checkbox" id="swCopyFail"> <span>복사가 막힌 경우</span></label>
+        <label class="sw"><input type="checkbox" id="swSaveFail"> <span>저장이 실패하는 경우</span></label>
+        <label class="sw"><input type="checkbox" id="swLoadFail"> <span>목록을 불러오지 못하는 경우</span></label>
+      </div>
+    </div>
+
+    <div class="box">
+      <h2>일어난 일 <small>최근 순</small></h2>
+      <ul class="log" id="log"><li class="none">아직 없어요.</li></ul>
+    </div>
+  </div>
+</div>
+
+<div class="ctx" id="ctx" role="menu"></div>
+
+<script>
+(function () {
+  var KEY = 'my-sentences-flow-test-v2';
+  var MAX = 30, MAX_LEN = 500, WARN_AT = 28;
+  var memory = [], lastCopied = '', afterReload = false, done = {};
+  var pendingNotice = null, badgeTimer = null, toastTimer = null, hlTimer = null;
+  var sim = { slow: false, noPopup: false, copyFail: false, saveFail: false, loadFail: false };
+  var ui = { editingId: null, adding: false, search: '', confirmClear: false, highlightId: null, copiedId: null, undo: null, loading: false, help: false };
+  var VERSION = '1.1.0';
+  var BRAND = { name: 'Phrasebook', site: '', contactLabel: 'Email', contactUrl: 'mailto:dangmujy@gmail.com' }; // 웹사이트는 없어서 숨김
+  var pendingSave = null;   // 30개가 차서 사용자가 지울 문장을 고르기를 기다리는 새 문장
+  var SEEN_KEY ='my-sentences-flow-test-v2-seen', loadTimer = null;
+  var seenMem = false;
+  function hasSeen() { try { return localStorage.getItem(SEEN_KEY) === '1'; } catch (e) { return seenMem; } }
+  function setSeen(v) { seenMem = v; try { if (v) localStorage.setItem(SEEN_KEY, '1'); else localStorage.removeItem(SEEN_KEY); } catch (e) {} }
+
+  var ICON = {
+    bookmark: '<path d="M6 4h12v17l-6-4-6 4z"/>',
+    x: '<path d="M6 6l12 12M18 6L6 18"/>',
+    lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',
+    copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/>',
+    search: '<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',
+    back: '<path d="M15 6l-6 6 6 6"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.7a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2.1M12 17v.5"/>',
+    pencil: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+    alert: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.5"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>'
+  };
+  function svg(name, size, w) {
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[name] + '</svg>';
+  }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function btn(cls, label, fn) { var b = el('button', cls, label); b.type = 'button'; if (fn) b.addEventListener('click', fn); return b; }
+
+  /* ---------- 시험 항목 ---------- */
+  var CASES = [
+    { g: '저장하기 (우클릭)' },
+    { id: 'menuSel',  t: '글자를 드래그하고 우클릭', e: '메뉴에 \'내 문장 모음에 저장\'이 보여요' },
+    { id: 'menuNone', t: '아무것도 고르지 않고 우클릭', e: '저장 메뉴는 보이지 않아요' },
+    { id: 'save',     t: '메뉴에서 \'내 문장 모음에 저장\' 누르기', e: '아이콘에 \'저장\' 표시가 뜨고 팝업이 열리며 \'저장했어요\' 알림과 함께 새 카드가 강조돼요' },
+    { id: 'dup',      t: '이미 저장한 문장을 다시 저장', e: '\'이미 저장한 문장이에요\' 알림, 중복 없이 맨 위로 올라와요' },
+    { id: 'cap',      t: '30개를 채운 뒤 한 문장 더 저장', e: '자동으로 지우지 않고, 지울 문장을 고르는 화면이 열려요 (가장 오래된 문장이 미리 골라져 있어요)' },
+    { id: 'capDo',    t: '지울 문장을 고르고 \'선택한 문장 지우고 저장\' 누르기', e: '고른 문장만 지워지고 새 문장이 맨 위에 들어가요. 알림에 \'되돌리기\'가 있어요' },
+    { id: 'capCancel', t: '지울 문장 고르는 화면에서 \'저장 안 함\' 누르기', e: '아무것도 지워지지 않고 \'저장하지 않았어요\'가 떠요' },
+    { id: 'long',     t: '\'너무 긴 문장 저장 시도\' 누르기', e: '저장하지 않고 이유와 해결 방법을 알려 줘요' },
+    { id: 'saveFail', t: '\'저장이 실패하는 경우\'를 켜고 저장', e: '\'저장하지 못했어요\' 안내가 떠요' },
+    { id: 'noPopup',  t: '\'팝업 자동 열기가 막힌 경우\'를 켜고 저장', e: '팝업은 안 열리고 아이콘 표시가 4초 동안 보여요. 아이콘을 누르면 알림이 보여요' },
+    { id: 'saving',   t: '\'처리가 느린 경우\'를 켜고 저장', e: '결과가 나오기 전에 아이콘에 \'저장 중\'이 먼저 보여요' },
+    { g: '처음 사용 · 보기 · 복사 · 붙여넣기' },
+    { id: 'onboard',  t: '처음으로 아이콘 누르기 (또는 \'처음 사용 안내 다시 보기\')', e: '사용 방법 3단계 화면이 먼저 보여요. \'알겠어요\'를 누르면 목록으로 가요' },
+    { id: 'loading',  t: '\'처리가 느린 경우\'를 켜고 아이콘 누르기', e: '흐린 카드가 반짝이는 \'불러오는 중\' 화면 뒤에 목록이 나와요' },
+    { id: 'open',     t: '확장 프로그램 아이콘 누르기', e: '저장한 문장이 카드로 보여요' },
+    { id: 'copy',     t: '카드 누르기', e: '카드에 \'복사됨\'이 뜨고 \'복사했어요\' 알림이 딱 한 번만 떠요' },
+    { id: 'brand',    t: '팝업 맨 위와 맨 아래 확인 (아래 \'Email\' 눌러 보기)', e: '맨 위에 버전, 맨 아래에 Phrasebook과 Email 링크가 보이고, 누르면 메일 앱이 열려요' },
+    { id: 'paste',    t: '답변 칸에 붙여넣기', e: '복사한 문장이 그대로 들어가요' },
+    { id: 'copyFail', t: '\'복사가 막힌 경우\'를 켜고 카드 누르기', e: '\'복사하지 못했어요\'와 직접 복사하는 방법을 알려 줘요' },
+    { id: 'search',   t: '문장이 6개 이상일 때 검색 칸에 글자 입력', e: '맞는 카드만 남고, 없으면 \'찾는 문장이 없어요\'가 떠요' },
+    { id: 'warn',     t: '28개 이상 저장된 상태에서 팝업 열기', e: '맨 위에 \'곧 가득 차요\'(30개면 \'가득 찼어요\') 안내가 떠요' },
+    { g: '추가 · 수정 · 삭제' },
+    { id: 'add',      t: '\'새 문장\' 눌러 직접 입력 후 저장', e: '맨 위에 추가되고 \'추가했어요\' 알림이 떠요' },
+    { id: 'edit',     t: '카드의 연필 아이콘으로 고쳐서 저장', e: '같은 자리에서 고쳐지고 \'수정했어요\' 알림이 떠요' },
+    { id: 'editErr',  t: '수정 중 내용을 모두 지우고 저장', e: '저장되지 않고 \'문장을 입력해 주세요\'가 입력 칸 아래에 떠요' },
+    { id: 'del',      t: '카드의 × 누르기', e: '바로 지워지고 \'되돌리기\'가 있는 알림이 6초간 떠요' },
+    { id: 'undo',     t: '알림의 \'되돌리기\' 누르기', e: '지운 문장이 원래 자리로 돌아와요' },
+    { id: 'clearAll', t: '아래쪽 \'모두 지우기\' → 확인 창에서 지우기', e: '확인 창이 먼저 뜨고, 확인하면 모두 지워져요' },
+    { g: '불러오기 · 유지' },
+    { id: 'loadFail', t: '\'목록을 불러오지 못하는 경우\'를 켜고 아이콘 누르기', e: '안내와 \'다시 시도\' 단추가 떠요. 끄고 누르면 목록이 돌아와요' },
+    { id: 'persist',  t: '새로고침 후 아이콘 다시 누르기', e: '저장한 문장이 그대로 남아 있어요' }
+  ];
+  var REAL = CASES.filter(function (c) { return c.id; });
+
+  function pass(id) { if (done[id]) return; done[id] = true; renderCases(); }
+  function renderCases() {
+    var tb = document.getElementById('cases'); tb.innerHTML = '';
+    var n = 0, no = 0;
+    CASES.forEach(function (c) {
+      var tr = document.createElement('tr');
+      if (c.g) {
+        tr.className = 'grp'; var td = el('td', '', c.g); td.colSpan = 3; tr.append(td); tb.append(tr); return;
+      }
+      no++; if (done[c.id]) n++;
+      if (done[c.id]) tr.className = 'ok';
+      var tx = el('td', '', c.t); tx.append(el('span', 'exp', '→ ' + c.e));
+      var st = el('td', 'st');
+      var chip = btn('st-chip', done[c.id] ? '통과' : '대기', function () { done[c.id] = !done[c.id]; renderCases(); });
+      st.append(chip);
+      tr.append(el('td', 'no', no), tx, st); tb.append(tr);
+    });
+    document.getElementById('doneCount').textContent = n + ' / ' + REAL.length;
+    document.getElementById('bar').style.width = (n / REAL.length * 100) + '%';
+  }
+
+  /* ---------- 화면 기획표 ---------- */
+  var SPEC_NOTE = [
+    '크롬은 복사나 저장이 끝나도 아무 표시를 해 주지 않아요. 그래서 알림은 모두 우리가 직접 보여 줘야 해요.',
+    '웹페이지 위에 알림을 띄우려면 \'모든 사이트의 내용 읽기\' 권한이 필요해요. 기획서의 \'하지 않을 일\'이라 쓰지 않아요.',
+    '크롬 알림(바탕화면 알림)도 권한이 하나 더 필요해서 쓰지 않아요.',
+    '대신 ① 아이콘 위 표시 ② 팝업 자동 열기 ③ 팝업 안의 알림, 이 세 가지로 알려요.',
+    '팝업 자동 열기는 크롬 창 상태나 버전에 따라 막힐 수 있어요. 막혀도 아이콘 표시와 다음에 여는 팝업의 알림으로 알 수 있게 했어요. (실제 설치 후 확인 필요)'
+  ];
+  var SPEC = [
+    { g: '저장 (우클릭)' },
+    ['저장 성공', '아이콘 \'저장\' 표시 4초 + 팝업 자동 열림 + 새 카드 강조', '저장했어요'],
+    ['팝업 자동 열기 막힘', '아이콘 \'저장\' 표시 4초. 다음에 팝업을 열면 알림 표시', '저장했어요'],
+    ['같은 문장', '팝업 알림, 맨 위로 이동', '이미 저장한 문장이에요. 맨 위로 올렸어요.'],
+    ['30개 가득 참 (새 문장 저장 시)', '자동으로 지우지 않음. 아이콘에 \'선택\' 표시 + 팝업에 지울 문장을 고르는 화면 (가장 오래된 문장이 미리 선택됨)', '30개가 가득 찼어요. 새 문장을 저장하려면 지울 문장을 하나 골라 주세요.'],
+    ['지울 문장을 골라 저장', '새 문장이 맨 위로 + 알림 6초 (되돌리기)', '저장했어요. “고른 문장…”을(를) 지웠어요.'],
+    ['저장 안 함', '아무것도 지우지 않음 + 알림', '저장하지 않았어요'],
+    ['저장 중 (처리가 느릴 때)', '아이콘 \'저장 중\' 표시 → 결과 표시로 바뀜', '저장 중'],
+    { g: '팝업 · 처음 사용과 불러오기' },
+    ['처음 사용', '팝업에 사용 방법 3단계. 머리의 ? 로 언제든 다시 보기', '처음 오셨나요? 이렇게 써요'],
+    ['불러오는 중', '목록 자리에 흐린 카드 3개가 반짝임', '(문구 없음, 화면 낭독용: 불러오는 중이에요)'],
+    ['너무 긴 문장 (500자 초과)', '아이콘 \'!\' 표시, 저장 안 함, 팝업 알림', '문장이 너무 길어서 저장하지 못했어요. 500자 이하로 나눠서 저장해 주세요.'],
+    ['공백만 선택', '저장 안 함, 팝업 알림', '빈 문장은 저장하지 않아요.'],
+    ['저장 실패 (저장 공간 오류)', '아이콘 \'!\' 표시, 팝업 알림', '저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.'],
+    { g: '팝업 · 보기와 복사' },
+    ['복사 성공', '카드에 \'복사됨\' + 팝업 알림', '복사했어요'],
+    ['복사 실패', '팝업 알림 (경고)', '복사하지 못했어요. 문장을 드래그해서 직접 복사해 주세요.'],
+    ['28~29개', '맨 위 안내, 개수 굵게', '곧 가득 차요. 30개까지 저장할 수 있어요.'],
+    ['30개', '맨 위 안내', '가득 찼어요. 새로 저장하면 지울 문장을 고를 수 있어요.'],
+    ['버전 · 브랜드', '맨 위에 버전(v1.1.0), 맨 아래에 브랜드 이름과 Email 링크 (누르면 메일 앱이 열림, 웹사이트는 없어서 숨김)', 'Phrasebook · Email'],
+    ['목록 불러오기 실패', '목록 자리에 안내 + \'다시 시도\'', '저장한 문장을 불러오지 못했어요. 저장해 둔 문장은 지워지지 않았어요.'],
+    ['검색 결과 없음', '목록 자리에 안내 + \'검색어 지우기\'', '찾는 문장이 없어요'],
+    ['저장한 문장 없음', '일러스트 + 안내 + \'새 문장 추가\'', '저장한 문장이 아직 없어요'],
+    { g: '팝업 · 추가 · 수정 · 삭제' },
+    ['새 문장 직접 추가', '맨 위 입력 칸 → 저장 시 알림', '추가했어요'],
+    ['수정 성공', '같은 자리에서 고침 + 알림', '수정했어요'],
+    ['수정 오류 · 빈 내용', '입력 칸 아래 오류 문구', '문장을 입력해 주세요.'],
+    ['수정 오류 · 500자 초과', '입력 칸 아래 오류 문구, 글자 수 굵게', '500자 이하로 써 주세요.'],
+    ['수정 오류 · 같은 문장', '입력 칸 아래 오류 문구', '같은 문장이 이미 있어요.'],
+    ['한 개 삭제', '바로 삭제 + 알림 6초 (되돌리기)', '문장을 지웠어요 · 되돌리기'],
+    ['모두 지우기', '확인 창 → 확인 후 알림', '저장한 문장 N개를 모두 지울까요? 되돌릴 수 없어요.'],
+    { g: '크롬이 막는 상황 (설명문·안내로 대응)' },
+    ['크롬 내부 페이지, 웹 스토어', '크롬이 우클릭 메뉴를 막음. 팝업의 \'새 문장\'으로 직접 추가', '우클릭이 안 되는 페이지에서는 \'새 문장\'으로 직접 추가할 수 있어요.'],
+    ['시크릿 창', '기본으로 꺼져 있음. 스토어 설명에 켜는 방법 안내', '시크릿 모드에서 쓰려면 확장 프로그램 관리에서 허용해 주세요.']
+  ];
+  var IO = [
+    ['저장', '문장 드래그 → 우클릭 → \'저장\' 누르기', '공백 정리 · 길이 검사 · 같은 문장 찾기 · 30개가 차 있으면 저장을 잠시 멈추고 사용자에게 지울 문장을 고르게 함 · 저장 공간에 기록', '아이콘 표시, 팝업 자동 열림, 알림, 새 카드 강조 / 가득 차면 지울 문장 고르기 / 실패하면 \'!\'와 이유', '저장 중 표시, 지울 문장 고르는 화면'],
+    ['보기', '아이콘 누르기', '저장 공간에서 읽어 오기', '카드 목록 / 빈 화면 / 불러오는 중 / 불러오기 실패', '불러오는 중, 처음 사용 안내'],
+    ['복사', '카드 누르기', '클립보드에 쓰기', '\'복사됨\' · 알림 / 막히면 직접 복사 안내', '—'],
+    ['직접 추가 · 수정', '입력 칸에 글 쓰기 → 저장', '글자 수 세기 · 빈 내용, 길이, 같은 문장 검사 · 기록', '글자 수, 오류 문구, 알림', '—'],
+    ['삭제', '× 누르기', '목록에서 빼고 6초 동안 되돌리기용으로 보관', '알림 + 되돌리기', '—'],
+    ['모두 지우기', '\'모두 지우기\' 누르기', '전체 삭제 (되돌릴 수 없음)', '확인 창 → 알림', '—'],
+    ['처음 사용', '처음 아이콘 누르기', '안내를 본 적 있는지 확인', '사용 방법 3단계 화면', '처음 사용 안내']
+  ];
+  function renderSpec() {
+    var v = document.getElementById('viewSpec'); v.innerHTML = '';
+    v.append(el('h2', '', '화면 기획표'));
+    v.append(el('p', '', '상황마다 어디에, 어떤 문구로 알리는지 정리했어요. 왼쪽 화면의 동작과 같아요.'));
+    var io = el('div', 'note'); io.append(el('b', '', '입력 → 처리 → 출력: 처리는 사용자에게 안 보여요'));
+    io.append(el('span', '', '안 보이는 처리의 결과와 기다리는 시간을 출력 화면이 대신 알려 줘야 해요. 빠져 있던 화면은 오른쪽 열에 적었어요.'));
+    v.append(io);
+    var it = el('table', 'spec'); var ih = document.createElement('thead');
+    ih.innerHTML = '<tr><th>흐름</th><th>입력 → 처리(안 보임) → 출력</th></tr>'; it.append(ih);
+    var ib = document.createElement('tbody');
+    IO.forEach(function (r) {
+      var tr = document.createElement('tr'); tr.append(el('td', '', r[0]));
+      var d = el('td', ''); d.append(document.createTextNode('입력: ' + r[1]));
+      d.append(el('span', 'exp', '처리: ' + r[2])); d.append(el('span', 'exp', '출력: ' + r[3]));
+      if (r[4] !== '—') { var a = el('span', 'exp'); a.style.fontWeight = '700'; a.style.color = 'var(--text)'; a.textContent = '추가한 화면: ' + r[4]; d.append(a); }
+      tr.append(d); ib.append(tr);
+    });
+    it.append(ib); v.append(it);
+    var gap = el('div', ''); gap.style.height = '14px'; v.append(gap);
+    var note = el('div', 'note'); note.append(el('b', '', '크롬에서 이렇게 뜰까? — 정리'));
+    var ul = document.createElement('ul'); SPEC_NOTE.forEach(function (t) { ul.append(el('li', '', t)); });
+    note.append(ul); v.append(note);
+    var t = el('table', 'spec'); var th = document.createElement('thead');
+    th.innerHTML = '<tr><th>상황</th><th>보여 주는 곳과 문구</th></tr>'; t.append(th);
+    var tb = document.createElement('tbody');
+    SPEC.forEach(function (r) {
+      var tr = document.createElement('tr');
+      if (r.g) { tr.className = 'grp'; var td = el('td', '', r.g); td.colSpan = 2; tr.append(td); }
+      else {
+        tr.append(el('td', '', r[0]));
+        var d = el('td', '', r[1]); d.append(el('span', 'exp', '“' + r[2] + '”')); tr.append(d);
+      }
+      tb.append(tr);
+    });
+    t.append(tb); v.append(t);
+  }
+  var tabCases = document.getElementById('tabCases'), tabSpec = document.getElementById('tabSpec');
+  function showTab(spec) {
+    document.getElementById('viewCases').hidden = spec;
+    document.getElementById('viewSpec').hidden = !spec;
+    tabCases.setAttribute('aria-selected', spec ? 'false' : 'true');
+    tabSpec.setAttribute('aria-selected', spec ? 'true' : 'false');
+  }
+  tabCases.addEventListener('click', function () { showTab(false); });
+  tabSpec.addEventListener('click', function () { showTab(true); });
+
+  /* ---------- 기록 ---------- */
+  function now() { var d = new Date(); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2); }
+  function log(msg) {
+    var ul = document.getElementById('log');
+    if (ul.firstChild && ul.firstChild.className === 'none') ul.innerHTML = '';
+    var li = document.createElement('li');
+    li.append(el('time', '', now()), el('span', '', msg));
+    ul.insertBefore(li, ul.firstChild);
+    while (ul.children.length > 40) ul.removeChild(ul.lastChild);
+  }
+
+  /* ---------- 저장소 ---------- */
+  function load() {
+    try { var a = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(a) ? a : []; }
+    catch (e) { return memory.slice(); }
+  }
+  function store(list) {
+    memory = list.slice();
+    try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) {}
+    renderPopup();
+  }
+  function uid() { return String(Date.now()) + Math.random().toString(36).slice(2, 6); }
+
+  /* ---------- 아이콘 표시(배지) ---------- */
+  var badge = document.getElementById('badge');
+  function showBadge(text, alertStyle, ms) {
+    badge.textContent = text;
+    badge.className = 'badge-top on' + (alertStyle ? ' alert' : '');
+    clearTimeout(badgeTimer);
+    if (ms) badgeTimer = setTimeout(hideBadge, ms);
+  }
+  function hideBadge() { clearTimeout(badgeTimer); badge.className = 'badge-top'; }
+
+  /* ---------- 알림(토스트) ---------- */
+  var popup = document.getElementById('popup');
+  var extBtn = document.getElementById('extBtn');
+  var toastEl = el('div', 'toast'); toastEl.setAttribute('role', 'status'); toastEl.setAttribute('aria-live', 'polite');
+  function isOpen() { return popup.classList.contains('on'); }
+  function hideToast() { clearTimeout(toastTimer); toastEl.className = 'toast'; }
+  function showToast(kind, msg, action, ms) {
+    if (!isOpen()) return;
+    clearTimeout(toastTimer);
+    toastEl.innerHTML = '';
+    toastEl.className = 'toast on ' + kind;
+    var ic = document.createElement('span'); ic.style.flex = 'none'; ic.style.display = 'flex';
+    ic.innerHTML = svg(kind === 'warn' ? 'alert' : 'check', 16);
+    toastEl.append(ic, el('span', '', msg));
+    if (action) toastEl.append(btn('tb', action.label, function () { hideToast(); action.fn(); }));
+    toastTimer = setTimeout(hideToast, ms || 3200);
+    // 화면을 다시 그릴 때 알림이 처음부터 또 나타나 보이지 않도록, 나타나는 움직임은 한 번만 보여요
+    setTimeout(function () { if (toastEl.classList.contains('on')) toastEl.classList.add('settled'); }, 260);
+  }
+  function notice(kind, msg, action, ms) {
+    pendingNotice = { kind: kind, msg: msg, action: action, ms: ms };
+    if (isOpen()) flushNotice();
+  }
+  function flushNotice() {
+    if (!pendingNotice || !isOpen()) return;
+    var n = pendingNotice; pendingNotice = null;
+    showToast(n.kind, n.msg, n.action, n.ms);
+  }
+
+  /* ---------- 문장 검사 ---------- */
+  function validate(text, excludeId) {
+    text = (text || '').trim();
+    if (!text) return '문장을 입력해 주세요.';
+    if (text.length > MAX_LEN) return MAX_LEN + '자 이하로 써 주세요.';
+    var dup = load().some(function (it) { return it.text === text && it.id !== excludeId; });
+    if (dup) return '같은 문장이 이미 있어요.';
+    return null;
+  }
+
+  /* ---------- 우클릭으로 저장 (확장 프로그램의 저장 동작) ---------- */
+  function saveFromMenu(raw) {
+    if (sim.slow) {
+      showBadge('저장 중', true); log('저장하는 중이에요…'); pass('saving');
+      setTimeout(function () { doSave(raw); }, 1300);
+    } else { doSave(raw); }
+  }
+  function doSave(raw) {
+    var text = (raw || '').trim();
+    if (!text) { showBadge('!', true); notice('warn', '빈 문장은 저장하지 않아요.'); log('빈 문장이라 저장하지 않았어요'); finishSave(); return; }
+    if (text.length > MAX_LEN) {
+      showBadge('!', true); notice('warn', '문장이 너무 길어서 저장하지 못했어요. ' + MAX_LEN + '자 이하로 나눠서 저장해 주세요.', null, 5000);
+      log('너무 긴 문장이라 저장하지 않았어요 (' + text.length + '자)'); pass('long'); finishSave(); return;
+    }
+    if (sim.saveFail) {
+      showBadge('!', true); notice('warn', '저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.', null, 5000);
+      log('저장에 실패했어요'); pass('saveFail'); finishSave(); return;
+    }
+    var list = load();
+    var existed = list.filter(function (it) { return it.text === text; })[0];
+    var rest = list.filter(function (it) { return it.text !== text; });
+    if (!existed && rest.length >= MAX) {
+      // 자동으로 지우지 않고, 어떤 문장을 지울지 사용자가 고르게 해요
+      pendingSave = text;
+      showBadge('선택', true);
+      log('30개가 가득 차서 지울 문장을 고르는 화면을 열어요'); pass('cap');
+      if (sim.noPopup) { log('팝업 자동 열기가 막혀 아이콘 표시만 보여요'); pass('noPopup'); }
+      finishSave(); return;
+    }
+    var item = existed ? { id: existed.id, text: text, savedAt: Date.now() } : { id: uid(), text: text, savedAt: Date.now() };
+    var next = [item].concat(rest).slice(0, MAX);
+    ui.highlightId = item.id;
+    clearTimeout(hlTimer); hlTimer = setTimeout(function () { ui.highlightId = null; if (isOpen() && !ui.editingId && !ui.adding) renderPopup(); }, 3500);
+    store(next);
+    showBadge('저장', false, 4000);
+    if (existed) { notice('ok', '이미 저장한 문장이에요. 맨 위로 올렸어요.'); log('이미 있는 문장이라 맨 위로 올렸어요 (' + next.length + '/' + MAX + ')'); pass('dup'); }
+    else { notice('ok', '저장했어요'); log('저장했어요 (' + next.length + '/' + MAX + ')'); }
+    pass('save');
+    if (sim.noPopup) { log('팝업 자동 열기가 막혀 아이콘 표시만 보여요'); pass('noPopup'); }
+    finishSave();
+  }
+  function finishSave() { if (!sim.noPopup) togglePopup(true, true); }
+
+  /* ---------- 복사 ---------- */
+  function fallbackCopy(text) {
+    var a = document.createElement('textarea');
+    a.value = text; a.style.position = 'fixed'; a.style.opacity = '0';
+    document.body.append(a); a.select();
+    var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    a.remove(); return ok;
+  }
+  function doCopy(text) {
+    if (sim.copyFail) return Promise.resolve(false);
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return fallbackCopy(text); });
+      }
+    } catch (e) {}
+    return Promise.resolve(fallbackCopy(text));
+  }
+  function copySentence(it) {
+    doCopy(it.text).then(function (ok) {
+      if (ok) {
+        lastCopied = it.text; ui.copiedId = it.id; renderPopup();
+        showToast('ok', '복사했어요'); log('문장을 복사했어요'); pass('copy');
+        setTimeout(function () { if (ui.copiedId === it.id) { ui.copiedId = null; if (isOpen() && !ui.editingId && !ui.adding) renderPopup(); } }, 1400);
+      } else {
+        showToast('warn', '복사하지 못했어요. 문장을 드래그해서 직접 복사해 주세요.', null, 4500);
+        log('복사하지 못했어요'); pass('copyFail');
+      }
+    });
+  }
+
+  /* ---------- 입력 상자 (추가 · 수정 공용) ---------- */
+  function editor(initial, excludeId, saveLabel, onSave, onCancel) {
+    var box = el('div', 'editor');
+    var ta = document.createElement('textarea');
+    ta.value = initial; ta.setAttribute('aria-label', '문장'); ta.placeholder = '저장할 문장을 입력해 주세요.';
+    var err = el('div', 'err'); err.setAttribute('role', 'alert');
+    var meta = el('div', 'meta');
+    var count = el('span', 'count');
+    function upd() { count.textContent = ta.value.trim().length + ' / ' + MAX_LEN; count.className = 'count' + (ta.value.trim().length > MAX_LEN ? ' over' : ''); }
+    ta.addEventListener('input', function () { upd(); err.className = 'err'; });
+    var btns = el('div', 'btns');
+    btns.append(btn('pill sm', '취소', onCancel), btn('pill sm ink', saveLabel, function () {
+      var m = validate(ta.value, excludeId);
+      if (m) { err.innerHTML = svg('alert', 14); err.append(el('span', '', m)); err.className = 'err on'; pass('editErr'); ta.focus(); return; }
+      onSave(ta.value.trim());
+    }));
+    meta.append(count, btns);
+    box.append(ta, err, meta); upd();
+    setTimeout(function () { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
+    return box;
+  }
+
+  /* ---------- 팝업 그리기 ---------- */
+  function emptyIllustration() {
+    return '<svg width="132" height="96" viewBox="0 0 132 96" fill="none" aria-hidden="true">' +
+      '<rect x="26" y="8" width="80" height="26" rx="9" stroke="#C8C8C8" stroke-width="1.5"/>' +
+      '<rect x="18" y="26" width="96" height="30" rx="10" fill="var(--surface)" stroke="#8A8A8A" stroke-width="1.5"/>' +
+      '<rect x="10" y="48" width="112" height="38" rx="12" fill="var(--surface)" stroke="var(--text)" stroke-width="1.75"/>' +
+      '<path d="M26 63h58M26 73h36M98 60v18M95 60h6M95 78h6" stroke="var(--text)" stroke-width="2" stroke-linecap="round"/></svg>';
+  }
+  function resetUi() { ui.editingId = null; ui.adding = false; ui.search = ''; ui.confirmClear = false; ui.help = false; ui.loading = false; clearTimeout(loadTimer); }
+  function helpView() {
+    var h = el('div', 'help');
+    h.append(el('h3', '', '처음 오셨나요? 이렇게 써요'));
+    var ol = document.createElement('ol');
+    [['웹페이지에서 저장할 문장을 드래그해요.'], ['우클릭해서 \'내 문장 모음에 저장\'을 눌러요.'], ['아이콘을 눌러 이 창을 열고, 카드를 누르면 복사돼요.']].forEach(function (s, i) {
+      var li = document.createElement('li'); li.append(el('b', '', i + 1), el('span', '', s[0])); ol.append(li);
+    });
+    h.append(ol);
+    var s1 = el('div', 'sec'); s1.append(el('strong', '', '저장되면 이렇게 알려 드려요'), el('p', '', '아이콘에 \'저장\' 표시가 뜨고, 이 창이 저절로 열려요. 새 문장은 맨 위에서 강조돼요.'));
+    var s2 = el('div', 'sec'); s2.append(el('strong', '', '알아 두세요'));
+    s2.append(el('p', '', '문장은 이 크롬 안에만 저장되고 바깥으로 보내지 않아요. 최대 30개, 한 문장은 500자까지예요.'));
+    s2.append(el('p', '', '우클릭이 안 되는 페이지에서는 \'새 문장\'으로 직접 추가할 수 있어요.'));
+    h.append(s1, s2);
+    var go = el('div', 'go'); go.append(btn('pill ink sm', '알겠어요', function () { ui.help = false; renderPopup(); }));
+    h.append(go);
+    return h;
+  }
+
+  var listWrap = null;
+  function renderPopup() {
+    if (!isOpen()) return;
+    popup.innerHTML = '';
+    var list = load();
+
+    // 머리
+    var head = el('div', 'ph'), l = el('div', 'l'), r = el('div', 'r');
+    var mark = el('span', 'mark'); mark.innerHTML = svg('bookmark', 15);
+    var tb = el('div'); tb.append(el('h2', '', '내 문장 모음'), el('span', 'ver', 'v' + VERSION));
+    l.append(mark, tb);
+    var failed = sim.loadFail;
+    var cnt = el('span', 'cnt' + (!failed && list.length >= WARN_AT ? ' hot' : ''), failed ? '' : list.length + ' / ' + MAX);
+    r.append(cnt);
+    var hb = btn('act', '', function () { ui.help = !ui.help; ui.adding = false; ui.editingId = null; renderPopup(); });
+    hb.innerHTML = svg('help', 16); hb.setAttribute('aria-label', '사용 방법'); hb.title = '사용 방법'; r.append(hb);
+    if (!failed && !ui.help) {
+      var add = btn('add-btn', '', function () { ui.adding = true; ui.editingId = null; renderPopup(); });
+      add.innerHTML = svg('plus', 13, 2.4); add.append('새 문장'); add.setAttribute('aria-label', '새 문장 직접 추가');
+      r.append(add);
+    }
+    head.append(l, r); popup.append(head);
+
+    if (ui.help) { popup.append(helpView()); popup.append(brandRow()); popup.append(toastEl); pass('onboard'); return; }
+    if (ui.loading) {
+      var sk = el('div', 'plist'); sk.setAttribute('aria-busy', 'true'); sk.setAttribute('aria-label', '불러오는 중이에요');
+      sk.append(el('div', 'skel'), el('div', 'skel'), el('div', 'skel'));
+      popup.append(sk); popup.append(footer(list, true)); popup.append(toastEl); pass('loading'); return;
+    }
+
+    if (failed) {
+      var eb = el('div', 'errbox'); eb.innerHTML = svg('alert', 28, 1.75);
+      eb.append(el('strong', '', '저장한 문장을 불러오지 못했어요'));
+      eb.append(el('span', '', '저장해 둔 문장은 지워지지 않았어요. 잠시 뒤 다시 시도해 주세요.'));
+      eb.append(btn('pill ink sm', '다시 시도', function () {
+        if (sim.loadFail) { showToast('warn', '아직 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.'); log('다시 시도했지만 불러오지 못했어요'); }
+        else { renderPopup(); }
+      }));
+      popup.append(eb);
+      pass('loadFail');
+      popup.append(footer(list, true));
+      popup.append(toastEl);
+      return;
+    }
+
+    // 30개가 차서 새 문장을 저장하려면 지울 문장을 골라야 하는 경우
+    if (pendingSave && list.length >= MAX) {
+      popup.append(pickView(list)); popup.append(brandRow()); popup.append(toastEl); pass('cap'); return;
+    }
+
+    // 안내 띠
+    if (list.length >= MAX) popup.append(banner('가득 찼어요. 새로 저장하면 지울 문장을 고를 수 있어요.'));
+    else if (list.length >= WARN_AT) popup.append(banner('곧 가득 차요. ' + MAX + '개까지 저장할 수 있어요.'));
+    if (list.length >= WARN_AT) pass('warn');
+
+    // 새 문장 입력
+    if (ui.adding) {
+      var box = editor('', null, '추가', function (text) {
+        var cur = load();
+        if (cur.length >= MAX) { ui.adding = false; pendingSave = text; log('30개가 가득 차서 지울 문장을 고르는 화면을 열어요'); renderPopup(); return; }
+        var item = { id: uid(), text: text, savedAt: Date.now() };
+        ui.adding = false; ui.highlightId = item.id;
+        clearTimeout(hlTimer); hlTimer = setTimeout(function () { ui.highlightId = null; if (isOpen() && !ui.editingId && !ui.adding) renderPopup(); }, 3500);
+        store([item].concat(cur));
+        showToast('ok', '추가했어요', null, 3500);
+        log('직접 추가했어요'); pass('add');
+      }, function () { ui.adding = false; renderPopup(); });
+      box.style.marginBottom = '8px'; popup.append(box);
+    }
+
+    // 검색
+    if (list.length >= 6) {
+      var sb = el('div', 'search'); sb.innerHTML = svg('search', 14);
+      var inp = document.createElement('input'); inp.type = 'search'; inp.placeholder = '문장 검색'; inp.value = ui.search; inp.setAttribute('aria-label', '문장 검색');
+      inp.addEventListener('input', function () { ui.search = inp.value; buildList(); if (ui.search.trim()) pass('search'); });
+      sb.append(inp); popup.append(sb);
+    }
+
+    listWrap = el('div', 'plist'); popup.append(listWrap); buildList();
+    popup.append(footer(list, false));
+
+    if (ui.confirmClear) {
+      var cf = el('div', 'confirm'), dg = el('div', 'dialog');
+      dg.setAttribute('role', 'alertdialog');
+      dg.append(el('strong', '', '저장한 문장 ' + list.length + '개를 모두 지울까요?'), el('p', '', '지우면 되돌릴 수 없어요.'));
+      var bs = el('div', 'btns');
+      bs.append(btn('pill sm', '취소', function () { ui.confirmClear = false; renderPopup(); }),
+        btn('pill sm ink', '모두 지우기', function () {
+          ui.confirmClear = false; store([]); showToast('ok', '모두 지웠어요'); log('저장한 문장을 모두 지웠어요'); pass('clearAll');
+        }));
+      dg.append(bs); cf.append(dg); popup.append(cf);
+    }
+    popup.append(toastEl);
+  }
+  function banner(text) {
+    var b = el('div', 'banner'); b.innerHTML = svg('alert', 15); b.append(el('span', '', text)); return b;
+  }
+  function footer(list, failed) {
+    var f = el('div', 'pfoot'), lk = el('span', 'lk'); lk.innerHTML = svg('lock', 13);
+    lk.append(el('span', '', '이 크롬 안에만 저장되고, 최대 30개예요.'));
+    f.append(lk);
+    if (!failed && list.length) f.append(btn('link', '모두 지우기', function () { ui.confirmClear = true; renderPopup(); }));
+    var wrap = document.createDocumentFragment(); wrap.append(f, brandRow());
+    return wrap;
+  }
+  // 하단: 브랜드 이름과 웹사이트·문의 채널
+  function brandRow() {
+    var b = el('div', 'brand');
+    b.append(el('b', '', BRAND.name));
+    var lks = el('div', 'lks');
+    if (BRAND.contactUrl) {
+      var a = el('a', 'link', BRAND.contactLabel); a.href = BRAND.contactUrl;
+      a.addEventListener('click', function () { log('Email 링크를 눌렀어요. 메일 앱이 열려요'); pass('brand'); });
+      lks.append(a);
+    }
+    b.append(lks); return b;
+  }
+
+  // 30개가 찼을 때: 지울 문장을 사용자가 고르는 화면
+  var pickId = null;
+  function pickView(list) {
+    var oldest = list[list.length - 1];
+    if (!pickId || !list.some(function (x) { return x.id === pickId; })) pickId = oldest.id;
+    var v = el('div', 'pick');
+    v.append(el('h3', '', '30개가 가득 찼어요'), el('p', '', '새 문장을 저장하려면 지울 문장을 하나 골라 주세요.'));
+    v.append(el('div', 'lab', '저장하려는 새 문장'));
+    var nc = el('div', 'newcard'); nc.append(el('span', 't', pendingSave)); v.append(nc);
+    v.append(el('div', 'lab', '지울 문장 (가장 오래된 문장부터)'));
+    var pl = el('div', 'picklist'); pl.setAttribute('role', 'radiogroup');
+    list.slice().reverse().forEach(function (it, i) {
+      var lab = el('label', 'opt' + (it.id === pickId ? ' sel' : ''));
+      var r = document.createElement('input'); r.type = 'radio'; r.name = 'pick'; r.checked = it.id === pickId;
+      r.addEventListener('change', function () {
+        pickId = it.id;
+        Array.prototype.forEach.call(pl.children, function (c) { c.classList.remove('sel'); });
+        lab.classList.add('sel');
+      });
+      var body = el('div'); body.style.minWidth = '0';
+      body.append(el('span', 't', it.text));
+      if (i === 0) body.append(el('span', 'tag', '가장 오래된 문장'));
+      lab.append(r, body); pl.append(lab);
+    });
+    v.append(pl);
+    var bs = el('div', 'btns');
+    bs.append(
+      btn('pill sm', '저장 안 함', function () {
+        pendingSave = null; pickId = null; hideBadge(); renderPopup(); showToast('ok', '저장하지 않았어요'); log('저장하지 않기로 했어요'); pass('capCancel');
+      }),
+      btn('pill sm ink', '선택한 문장 지우고 저장', function () {
+        var cur = load(), idx = cur.findIndex(function (x) { return x.id === pickId; });
+        var gone = cur[idx]; if (!gone) return;
+        var item = { id: uid(), text: pendingSave, savedAt: Date.now() };
+        var next = [item].concat(cur.filter(function (x) { return x.id !== pickId; }));
+        pendingSave = null; pickId = null; hideBadge();
+        ui.highlightId = item.id;
+        clearTimeout(hlTimer); hlTimer = setTimeout(function () { ui.highlightId = null; if (isOpen() && !ui.editingId && !ui.adding) renderPopup(); }, 3500);
+        store(next);
+        var g = gone.text.length > 14 ? gone.text.slice(0, 14) + '…' : gone.text;
+        showToast('ok', '저장했어요. “' + g + '”을(를) 지웠어요.', { label: '되돌리기', fn: function () { undoReplace(item.id, gone, idx); } }, 6000);
+        log('고른 문장을 지우고 새 문장을 저장했어요'); pass('capDo'); pass('save');
+      })
+    );
+    v.append(bs);
+    return v;
+  }
+  function undoReplace(newId, gone, idx) {
+    var cur = load().filter(function (x) { return x.id !== newId; });
+    cur.splice(Math.min(idx, cur.length), 0, gone);
+    store(cur.slice(0, MAX));
+    showToast('ok', '되돌렸어요'); log('지운 문장을 되돌리고 새 문장은 취소했어요');
+  }
+
+  function buildList() {
+    var all = load(), q = ui.search.trim().toLowerCase();
+    var items = q ? all.filter(function (it) { return it.text.toLowerCase().indexOf(q) !== -1; }) : all;
+    listWrap.innerHTML = '';
+    if (!all.length) {
+      if (ui.adding) return;
+      var em = el('div', 'empty'); em.innerHTML = emptyIllustration();
+      em.append(el('strong', '', '저장한 문장이 아직 없어요'));
+      em.append(el('span', 'sub', '웹페이지에서 문장을 드래그하고 우클릭해서 \'내 문장 모음에 저장\'을 눌러 보세요.'));
+      em.append(el('span', 'sub', '우클릭이 안 되는 페이지에서는 \'새 문장\'으로 직접 추가할 수 있어요.'));
+      em.append(btn('pill ink sm', '새 문장 추가', function () { ui.adding = true; renderPopup(); }));
+      listWrap.append(em); return;
+    }
+    if (!items.length) {
+      var ne = el('div', 'empty'); ne.append(el('strong', '', '찾는 문장이 없어요'));
+      ne.append(btn('pill sm', '검색어 지우기', function () { ui.search = ''; renderPopup(); }));
+      listWrap.append(ne); return;
+    }
+    items.forEach(function (it) { listWrap.append(row(it)); });
+  }
+
+  function row(it) {
+    var wrap = el('div', 'prow');
+    if (ui.editingId === it.id) {
+      wrap.append(editor(it.text, it.id, '저장', function (text) {
+        var next = load().map(function (x) { return x.id === it.id ? { id: x.id, text: text, savedAt: x.savedAt } : x; });
+        ui.editingId = null; ui.highlightId = it.id;
+        clearTimeout(hlTimer); hlTimer = setTimeout(function () { ui.highlightId = null; if (isOpen() && !ui.editingId && !ui.adding) renderPopup(); }, 3500);
+        store(next); showToast('ok', '수정했어요'); log('문장을 수정했어요'); pass('edit');
+      }, function () { ui.editingId = null; renderPopup(); }));
+      return wrap;
+    }
+    var card = el('button', 'card' + (ui.highlightId === it.id ? ' hl' : '')); card.type = 'button';
+    card.title = it.text;
+    card.append(el('span', 't', it.text));
+    if (ui.copiedId === it.id) card.append(el('span', 'tag', '복사됨'));
+    else if (ui.highlightId === it.id) card.append(el('span', 'tag', '방금 저장'));
+    card.addEventListener('click', function () { copySentence(it); });
+    var acts = el('div', 'acts');
+    var ed = btn('act', '', function () { ui.editingId = it.id; ui.adding = false; renderPopup(); });
+    ed.innerHTML = svg('pencil', 14); ed.setAttribute('aria-label', '이 문장 고치기'); ed.title = '고치기';
+    var dl = btn('act', '', function () {
+      var cur = load(), idx = cur.findIndex(function (x) { return x.id === it.id; });
+      store(cur.filter(function (x) { return x.id !== it.id; }));
+      ui.undo = { item: it, idx: idx };
+      showToast('ok', '문장을 지웠어요', { label: '되돌리기', fn: undoDelete }, 6000);
+      log('문장을 지웠어요'); pass('del');
+    });
+    dl.innerHTML = svg('x', 14); dl.setAttribute('aria-label', '이 문장 지우기'); dl.title = '지우기';
+    acts.append(ed, dl);
+    wrap.append(card, acts);
+    return wrap;
+  }
+  function undoDelete() {
+    if (!ui.undo) return;
+    var u = ui.undo; ui.undo = null;
+    var cur = load();
+    if (cur.some(function (x) { return x.text === u.item.text; })) { showToast('warn', '같은 문장이 이미 있어서 되돌리지 않았어요.'); return; }
+    cur.splice(Math.min(u.idx, cur.length), 0, u.item);
+    store(cur.slice(0, MAX));
+    showToast('ok', '되돌렸어요'); log('지운 문장을 되돌렸어요'); pass('undo');
+  }
+
+  /* ---------- 열기 · 닫기 ---------- */
+  function togglePopup(force, auto) {
+    var open = typeof force === 'boolean' ? force : !isOpen();
+    if (open === isOpen() && !auto) return;
+    if (!open) { popup.classList.remove('on'); extBtn.setAttribute('aria-expanded', 'false'); resetUi(); hideToast(); return; }
+    hideCtx();
+    popup.classList.add('on'); extBtn.setAttribute('aria-expanded', 'true');
+    if (!auto) { ui.confirmClear = false; }
+    hideBadge();
+    if (pendingSave && load().length < MAX) {
+      // 기다리던 사이 자리가 생겼으면 그대로 저장해요
+      var it0 = { id: uid(), text: pendingSave, savedAt: Date.now() }; pendingSave = null;
+      store([it0].concat(load())); ui.highlightId = it0.id;
+      notice('ok', '저장했어요'); log('자리가 생겨서 기다리던 문장을 저장했어요');
+    }
+    if (!auto && !hasSeen()) { ui.help = true; setSeen(true); }
+    if (sim.slow && !sim.loadFail && !ui.help) {
+      ui.loading = true;
+      clearTimeout(loadTimer);
+      loadTimer = setTimeout(function () { ui.loading = false; renderPopup(); flushNotice(); }, 1400);
+    }
+    renderPopup();
+    if (!ui.loading) flushNotice();
+    var n = load().length;
+    log(auto ? '팝업이 저절로 열렸어요' : '팝업을 열었어요 (저장한 문장 ' + n + '개)');
+    if (!sim.loadFail && n > 0) pass('open');
+    if (afterReload && !auto) {
+      afterReload = false;
+      if (n > 0) { pass('persist'); log('새로고침 뒤에도 저장한 문장이 남아 있어요'); }
+    }
+  }
+  extBtn.addEventListener('click', function (e) { e.stopPropagation(); togglePopup(); });
+  popup.addEventListener('click', function (e) { e.stopPropagation(); });
+  document.addEventListener('click', function () { togglePopup(false); hideCtx(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { togglePopup(false); hideCtx(); } });
+
+  /* ---------- 붙여넣기 ---------- */
+  var reply = document.getElementById('reply');
+  document.getElementById('pasteBtn').addEventListener('click', function () {
+    if (!lastCopied) { log('아직 복사한 문장이 없어요. 팝업에서 카드를 먼저 눌러 보세요'); return; }
+    reply.value += (reply.value && !/\s$/.test(reply.value) ? ' ' : '') + lastCopied;
+    reply.focus(); log('답변 칸에 붙여 넣었어요'); pass('paste');
+  });
+  reply.addEventListener('paste', function () {
+    setTimeout(function () { if (lastCopied && reply.value.indexOf(lastCopied) !== -1) { log('답변 칸에 붙여 넣었어요'); pass('paste'); } }, 0);
+  });
+
+  /* ---------- 우클릭 메뉴 ---------- */
+  var ctx = document.getElementById('ctx'), page = document.getElementById('page'), pendingSelection = '';
+  function hideCtx() {
+    ctx.classList.remove('on');
+    try { if (window.CSS && CSS.highlights) CSS.highlights.delete('keep-sel'); } catch (e) {}
+  }
+  // 우클릭 메뉴가 떠 있는 동안 고른 문장의 검은 표시를 계속 보여 줘요
+  function keepSelection(range) {
+    try { if (window.CSS && CSS.highlights && window.Highlight) CSS.highlights.set('keep-sel', new Highlight(range)); } catch (e) {}
+  }
+  function menuItem(icon, label, cls, fn) {
+    var b = el('button', cls || ''); b.type = 'button'; b.setAttribute('role', 'menuitem');
+    b.innerHTML = svg(icon, 15); b.append(label);
+    b.addEventListener('click', function (e) { e.stopPropagation(); hideCtx(); fn(); });
+    return b;
+  }
+  page.addEventListener('contextmenu', function (e) {
+    if (e.target.closest('textarea')) return;
+    e.preventDefault(); togglePopup(false);
+    var sel = (window.getSelection() ? window.getSelection().toString() : '').trim();
+    pendingSelection = sel; ctx.innerHTML = '';
+    if (sel) {
+      var s = window.getSelection();
+      if (s.rangeCount) keepSelection(s.getRangeAt(0).cloneRange());
+      ctx.append(menuItem('copy', '복사', '', function () { lastCopied = sel; fallbackCopy(sel); log('선택한 글자를 복사했어요'); }));
+      ctx.append(menuItem('search', '선택한 글자로 검색', '', function () { log('(시험용 화면이라 검색은 하지 않아요)'); }));
+      ctx.append(document.createElement('hr'));
+      ctx.append(menuItem('bookmark', '내 문장 모음에 저장', 'save', function () { saveFromMenu(pendingSelection); }));
+      log('글자를 고르고 우클릭했어요. 저장 메뉴가 보여요'); pass('menuSel');
+    } else {
+      ctx.append(menuItem('back', '뒤로', '', function () {}));
+      ctx.append(menuItem('copy', '페이지 주소 복사', '', function () {}));
+      log('고른 글자 없이 우클릭했어요. 저장 메뉴가 없어요'); pass('menuNone');
+    }
+    ctx.classList.add('on');
+    var w = 232, h = ctx.offsetHeight;
+    ctx.style.left = Math.max(8, Math.min(e.clientX, window.innerWidth - w - 8)) + 'px';
+    ctx.style.top = Math.max(8, Math.min(e.clientY, window.innerHeight - h - 8)) + 'px';
+  });
+  window.addEventListener('scroll', hideCtx, true);
+
+  /* ---------- 시험 도구 ---------- */
+  function fill(n) {
+    var list = [];
+    for (var i = n; i >= 1; i--) list.push({ id: 'fill' + i, text: '시험용 문장 ' + i + '번 — 안내 문구 예시입니다.', savedAt: Date.now() - i });
+    store(list); log('시험용 문장 ' + n + '개를 채웠어요');
+  }
+  document.getElementById('fill28').addEventListener('click', function () { fill(28); });
+  document.getElementById('fill30').addEventListener('click', function () { fill(30); });
+  document.getElementById('fillLong').addEventListener('click', function () {
+    var s = ''; while (s.length <= MAX_LEN) s += '아주 긴 안내 문장입니다. ';
+    log('긴 문장(' + s.length + '자)을 저장해 봐요'); saveFromMenu(s);
+  });
+  document.getElementById('clearBtn').addEventListener('click', function () { store([]); log('저장한 문장을 모두 비웠어요'); });
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    togglePopup(false); pendingSave = null; pickId = null; store([]); done = {}; lastCopied = ''; afterReload = false; pendingNotice = null; reply.value = ''; hideBadge();
+    ['Slow', 'NoPopup', 'CopyFail', 'SaveFail', 'LoadFail'].forEach(function (k) { document.getElementById('sw' + k).checked = false; });
+    sim = { slow: false, noPopup: false, copyFail: false, saveFail: false, loadFail: false }; setSeen(false);
+    document.getElementById('log').innerHTML = '<li class="none">아직 없어요.</li>';
+    renderCases();
+  });
+  document.getElementById('helpBtn').addEventListener('click', function (e) {
+    e.stopPropagation(); setSeen(false); togglePopup(false); togglePopup(true); log('처음 사용 안내를 다시 열었어요');
+  });
+  [['swSlow', 'slow'], ['swNoPopup', 'noPopup'], ['swCopyFail', 'copyFail'], ['swSaveFail', 'saveFail'], ['swLoadFail', 'loadFail']].forEach(function (p) {
+    document.getElementById(p[0]).addEventListener('change', function (e) {
+      sim[p[1]] = e.target.checked; if (isOpen()) renderPopup();
+    });
+  });
+  document.getElementById('reloadBtn').addEventListener('click', function () {
+    togglePopup(false); hideCtx(); hideBadge(); window.getSelection().removeAllRanges(); reply.value = ''; afterReload = true;
+    page.style.opacity = '0.3'; setTimeout(function () { page.style.opacity = ''; }, 180);
+    log('페이지를 새로고침했어요');
+  });
+
+  // 오른쪽 시험 패널을 눌러도 팝업이 닫히지 않게 해요 (저장 흉내 뒤에 열린 팝업을 볼 수 있도록)
+  document.querySelector('.panel').addEventListener('click', function (e) { e.stopPropagation(); });
+
+  /* ---------- 화면 색 ---------- */
+  var themeBtn = document.getElementById('themeBtn');
+  themeBtn.addEventListener('click', function () {
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+    themeBtn.textContent = dark ? '어두운 화면으로' : '밝은 화면으로';
+  });
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.setAttribute('data-theme', 'dark'); themeBtn.textContent = '밝은 화면으로';
+  }
+
+  renderCases(); renderSpec();
+})();
+</script>
+</body>
+</html>

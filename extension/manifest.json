@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "내 문장 모음",
+  "version": "1.1.0",
+  "description": "자주 쓰는 안내 문장을 드래그 → 우클릭으로 저장하고, 단추를 눌러 카드를 누르면 복사해요. 문장은 내 크롬 안에만 저장돼요.",
+  "permissions": ["contextMenus", "storage"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "내 문장 모음",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}
